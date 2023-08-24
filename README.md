@@ -50,3 +50,5 @@ Colors:
 -   P - Purple
 -   M - Magenta
 -   A - Aqua
+
+A video overview of all the features is also available [here](https://youtu.be/p6k4BcRgB7k).
