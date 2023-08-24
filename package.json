@@ -1,0 +1,23 @@
+{
+    "name": "drawing-bookmarklet",
+    "version": "1.0.0",
+    "description": "An intuitive bookmarklet for drawing over web pages.",
+    "main": "drawing.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/SimonDMC/drawing-bookmarklet.git"
+    },
+    "keywords": [
+        "drawing",
+        "bookmarklet"
+    ],
+    "author": "SimonDMC <simon@simondmc.com> (https://simondmc.com)",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/SimonDMC/drawing-bookmarklet/issues"
+    },
+    "homepage": "https://github.com/SimonDMC/drawing-bookmarklet#readme"
+}
