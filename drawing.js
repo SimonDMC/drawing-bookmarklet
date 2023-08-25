@@ -86,13 +86,6 @@
     function pointerUp(e) {
         pointerMove(e);
 
-        if (points.length == 2) {
-            // mouse hasn't moved, draw point
-            ctx.beginPath();
-            ctx.arc(points[0].x, points[0].y, size / 2 + 1, 0, 2 * Math.PI);
-            ctx.fill();
-        }
-
         if (e.button == 0 || e.button == undefined) {
             drawing = false;
         }
@@ -140,9 +133,13 @@
         const previous = history[history.length - 1].data;
         ctx.putImageData(previous, 0, 0);
 
+        // this is in a temp variable for single point access
+        let tempSize = size;
+
         // erase with larger brush
         if (erasing) {
-            ctx.lineWidth = Math.max(size, 30);
+            tempSize = Math.max(size, 30);
+            ctx.lineWidth = tempSize;
 
             // erase based on whether canvas is whiteboard or not
             if (whiteboard) {
@@ -160,7 +157,7 @@
         if (points.length < 4) {
             var b = points[0];
             ctx.beginPath();
-            ctx.arc(b.x, b.y, size / 2, 0, Math.PI * 2, !0);
+            ctx.arc(b.x, b.y, tempSize / 2, 0, Math.PI * 2, !0);
             ctx.closePath();
             ctx.fill();
         } else {
