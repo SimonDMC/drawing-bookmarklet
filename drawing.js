@@ -21,6 +21,7 @@
 
     if (document.sdmcd) {
         addCSS();
+
         canvas = document.createElement("canvas");
         canvas.id = "sdmcd-canvas";
         canvas.width = window.innerWidth;
@@ -37,18 +38,19 @@
         applyColor();
 
         addMouseListeners();
-        window.addEventListener("keydown", keyDown, true);
+
+        // save listener aborter to document to persist across bookmarklet calls
+        document.sdmcdKeyAborter = new AbortController();
+        window.addEventListener("keydown", keyDown, { capture: true, signal: document.sdmcdKeyAborter.signal });
     } else {
         removeDrawing();
     }
 
     function removeDrawing() {
         removeMouseListeners();
-        window.removeEventListener("keydown", keyDown, true);
-
-        history = [];
-
+        document.sdmcdKeyAborter.abort();
         document.getElementById("sdmcd-canvas")?.remove();
+        document.getElementById("sdmcd-popup-bg")?.remove();
     }
 
     function contextMenu(e) {
@@ -333,8 +335,7 @@
     function applyUnfocus() {
         if (unfocused) {
             hidden = false;
-            applyHide();
-
+            canvas.style.display = "block";
             canvas.style.pointerEvents = "none";
             removeMouseListeners();
         } else {
@@ -346,8 +347,6 @@
     function applyHide() {
         if (hidden) {
             unfocused = false;
-            applyUnfocus();
-
             canvas.style.pointerEvents = "none";
             canvas.style.display = "none";
             removeMouseListeners();
@@ -385,22 +384,20 @@
     }
 
     function addMouseListeners() {
-        window.addEventListener("contextmenu", contextMenu);
-        window.addEventListener("pointerdown", pointerDown);
-        window.addEventListener("pointerup", pointerUp);
-        window.addEventListener("pointermove", pointerMove);
-        window.addEventListener("dragstart", dragStart);
-        window.addEventListener("wheel", scroll, { passive: false });
+        // save listener aborter to document to persist across bookmarklet calls
+        document.sdmcdMouseAborter = new AbortController();
+
+        window.addEventListener("contextmenu", contextMenu, { signal: document.sdmcdMouseAborter.signal });
+        window.addEventListener("pointerdown", pointerDown, { signal: document.sdmcdMouseAborter.signal });
+        window.addEventListener("pointerup", pointerUp, { signal: document.sdmcdMouseAborter.signal });
+        window.addEventListener("pointermove", pointerMove, { signal: document.sdmcdMouseAborter.signal });
+        window.addEventListener("dragstart", dragStart, { signal: document.sdmcdMouseAborter.signal });
+        window.addEventListener("wheel", scroll, { passive: false, signal: document.sdmcdMouseAborter.signal });
         document.body.style.touchAction = "none";
     }
 
     function removeMouseListeners() {
-        window.removeEventListener("contextmenu", contextMenu);
-        window.removeEventListener("pointerdown", pointerDown);
-        window.removeEventListener("pointerup", pointerUp);
-        window.removeEventListener("pointermove", pointerMove);
-        window.removeEventListener("dragstart", dragStart);
-        window.removeEventListener("wheel", scroll);
+        document.sdmcdMouseAborter.abort();
         document.body.style.touchAction = "auto";
     }
 
