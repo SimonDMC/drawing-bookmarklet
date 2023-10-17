@@ -214,12 +214,17 @@
                 redoHistory = [];
                 break;
             case "s":
+                // save image
                 if (e.ctrlKey) {
                     const dataURL = canvas.toDataURL("image/png");
                     const a = document.createElement("a");
                     a.href = dataURL;
                     a.download = "drawing.png";
                     a.click();
+                } else {
+                    // reset stroke width
+                    size = 5;
+                    ctx.lineWidth = 5;
                 }
                 break;
             case "w":
@@ -448,6 +453,7 @@
             "",
             "↑ / Scroll up - Increase brush size",
             "↓ / Scroll down - Decrease brush size",
+            "S - Reset brush size",
             "",
             "Ctrl + Z - Undo",
             "Ctrl + Y - Redo",
