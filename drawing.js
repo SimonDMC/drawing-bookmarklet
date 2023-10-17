@@ -11,8 +11,8 @@
     let redoHistory = [];
     let points = [];
     let lastX, lastY;
-    let sizeIndicator;
-    let sizeIndicatorFadeTimeout;
+    let brushOutline;
+    let brushOutlineFadeTimeout;
 
     let whiteboard = false;
 
@@ -69,6 +69,7 @@
         // start erasing if RMB (and not drawing)
         if (e.button === 2 && !drawing) {
             erasing = true;
+            displayBrushOutline();
         }
 
         // ignore click if not drawing or erasing
@@ -91,18 +92,26 @@
         }
         if (e.button == 2) {
             erasing = false;
+            // fade out
+            brushOutline.classList.add("sdmcd-fading");
         }
         points = [];
     }
 
     function pointerMove(e) {
-        // move size indicator to mouse position
-        if (sizeIndicator) {
-            sizeIndicator.style.top = e.clientY - size / 2 - 1 + "px";
-            sizeIndicator.style.left = e.clientX - size / 2 - 1 + "px";
+        // move brush outline to mouse position
+        if (brushOutline) {
+            // match erasing brush size if erasing
+            let outlineSize = size;
+            if (brushOutline.classList.contains("sdmcd-erasing")) {
+                outlineSize = Math.max(size, 30);
+            }
+
+            brushOutline.style.top = e.clientY - outlineSize / 2 - 1 + "px";
+            brushOutline.style.left = e.clientX - outlineSize / 2 - 1 + "px";
         }
 
-        // save mouse position for size indicator
+        // save mouse position for brush outline
         lastX = e.clientX;
         lastY = e.clientY;
 
@@ -124,7 +133,7 @@
             size = 1;
         }
         ctx.lineWidth = size;
-        displaySizeIndicator();
+        displayBrushOutline();
         e.preventDefault();
     }
 
@@ -225,6 +234,7 @@
                     // reset stroke width
                     size = 5;
                     ctx.lineWidth = 5;
+                    displayBrushOutline();
                 }
                 break;
             case "w":
@@ -265,7 +275,7 @@
             case "ArrowUp":
                 size += 1;
                 ctx.lineWidth = size;
-                displaySizeIndicator();
+                displayBrushOutline();
                 break;
             case "ArrowDown":
                 size -= 1;
@@ -273,7 +283,7 @@
                     size = 1;
                 }
                 ctx.lineWidth = size;
-                displaySizeIndicator();
+                displayBrushOutline();
                 break;
             case "f":
                 unfocused = !unfocused;
@@ -403,28 +413,42 @@
         document.body.style.touchAction = "auto";
     }
 
-    function displaySizeIndicator() {
-        if (!sizeIndicator) {
-            sizeIndicator = document.createElement("div");
-            sizeIndicator.id = "sdmcd-size-indicator";
-            document.body.appendChild(sizeIndicator);
+    function displayBrushOutline() {
+        if (!brushOutline) {
+            brushOutline = document.createElement("div");
+            brushOutline.id = "sdmcd-brush-outline";
+            document.body.appendChild(brushOutline);
         }
 
         // reveal immediately
-        sizeIndicator.classList.remove("sdmcd-fading");
+        brushOutline.classList.remove("sdmcd-fading");
+
+        // clear erasing class if not erasing anymore
+        if (!erasing) {
+            brushOutline.classList.remove("sdmcd-erasing");
+        }
 
         // cancel fade
-        clearTimeout(sizeIndicatorFadeTimeout);
+        clearTimeout(brushOutlineFadeTimeout);
 
-        sizeIndicator.style.top = lastY - size / 2 - 1 + "px";
-        sizeIndicator.style.left = lastX - size / 2 - 1 + "px";
-        sizeIndicator.style.width = size + "px";
-        sizeIndicator.style.height = size + "px";
+        // match erasing brush size if erasing and add class for use in pointermove
+        let outlineSize = size;
+        if (erasing) {
+            outlineSize = Math.max(size, 30);
+            brushOutline.classList.add("sdmcd-erasing");
+        }
 
-        sizeIndicatorFadeTimeout = setTimeout(() => {
-            // fade out after 0.5 seconds
-            sizeIndicator.classList.add("sdmcd-fading");
-        }, 500);
+        brushOutline.style.top = lastY - outlineSize / 2 - 1 + "px";
+        brushOutline.style.left = lastX - outlineSize / 2 - 1 + "px";
+        brushOutline.style.width = outlineSize + "px";
+        brushOutline.style.height = outlineSize + "px";
+
+        if (!erasing) {
+            brushOutlineFadeTimeout = setTimeout(() => {
+                // fade out after 0.5 seconds
+                brushOutline.classList.add("sdmcd-fading");
+            }, 500);
+        }
     }
 
     function showColorPopup() {
@@ -530,7 +554,7 @@
         const style = document.createElement("style");
         style.id = "sdmcd-css";
         style.innerHTML =
-            "#sdmcd-canvas{position:fixed;top:0;left:0;z-index:9999997;cursor:crosshair}#sdmcd-popup-bg{position:fixed;top:0;left:0;z-index:9999999;width:100vw;height:100vh;background-color:rgba(0,0,0,.8);display:flex;justify-content:center;align-items:center;font-size:2rem;color:#fff;font-family:Helvetica,sans-serif}#sdmcd-popup-content{display:flex;flex-direction:column;justify-content:center;align-items:center;pointer-events:none}#sdmcd-popup-content.sdmcd-horizontal{flex-direction:row}.sdmcd-help-section{display:flex;flex-direction:column;justify-content:center;align-items:center;width:35vw}.sdmcd-help-line{font-size:1.5vw;height:1.6em;margin:0}#sdmcd-color{width:10em;height:10em;border-radius:.5em;padding:0;border:none;outline:0;cursor:pointer;pointer-events:auto}#sdmcd-color::-webkit-color-swatch-wrapper{padding:0}#sdmcd-color::-webkit-color-swatch{border:none;border-radius:.5em}#sdmcd-size-indicator{position:fixed;border-radius:50%;border:1px solid #888;pointer-events:none;z-index:9999998}#sdmcd-size-indicator.sdmcd-fading{opacity:0;transition:opacity .5s}";
+            "#sdmcd-canvas{position:fixed;top:0;left:0;z-index:9999997;cursor:crosshair}#sdmcd-popup-bg{position:fixed;top:0;left:0;z-index:9999999;width:100vw;height:100vh;background-color:rgba(0,0,0,.8);display:flex;justify-content:center;align-items:center;font-size:2rem;color:#fff;font-family:Helvetica,sans-serif}#sdmcd-popup-content{display:flex;flex-direction:column;justify-content:center;align-items:center;pointer-events:none}#sdmcd-popup-content.sdmcd-horizontal{flex-direction:row}.sdmcd-help-section{display:flex;flex-direction:column;justify-content:center;align-items:center;width:35vw}.sdmcd-help-line{font-size:1.5vw;height:1.6em;margin:0}#sdmcd-color{width:10em;height:10em;border-radius:.5em;padding:0;border:none;outline:0;cursor:pointer;pointer-events:auto}#sdmcd-color::-webkit-color-swatch-wrapper{padding:0}#sdmcd-color::-webkit-color-swatch{border:none;border-radius:.5em}#sdmcd-brush-outline{position:fixed;border-radius:50%;border:1px solid #888;pointer-events:none;z-index:9999998}#sdmcd-brush-outline.sdmcd-fading{opacity:0;transition:opacity .5s}";
         document.head.appendChild(style);
     }
 })();

@@ -68,7 +68,7 @@
     border-radius: .5em;
 }
 
-#sdmcd-size-indicator {
+#sdmcd-brush-outline {
     position: fixed;
     border-radius: 50%;
     border: 1px solid #888;
@@ -76,7 +76,7 @@
     z-index: 9999998;
 }
 
-#sdmcd-size-indicator.sdmcd-fading {
+#sdmcd-brush-outline.sdmcd-fading {
     opacity: 0;
     transition: opacity 0.5s;
 }
