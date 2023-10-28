@@ -62,8 +62,8 @@
         // don't draw if popup is open
         if (document.getElementById("sdmcd-popup-bg")) return;
 
-        // start drawing if LMB or touch (and not erasing)
-        if ((e.button === 0 || e.button === undefined) && !erasing) {
+        // start drawing if LMB or touch
+        if (e.button === 0 || e.button === undefined) {
             // reset size and color from potential previous erasing
             ctx.lineWidth = size;
             ctx.globalCompositeOperation = "source-over";
@@ -71,8 +71,8 @@
             drawing = true;
         }
 
-        // start erasing if RMB (and not drawing)
-        if (e.button === 2 && !drawing) {
+        // start erasing if RMB
+        if (e.button === 2) {
             // erase with larger brush
             ctx.lineWidth = Math.max(size, 30);
             // erase based on whether canvas is whiteboard or not
@@ -102,10 +102,11 @@
     function pointerUp(e) {
         pointerMove(e);
 
-        if (e.button == 0 || e.button == undefined) {
+        // don't check for button release as weird button combinations can cause only LMB down and RMB up events to fire (or vice versa)
+        if (drawing) {
             drawing = false;
         }
-        if (e.button == 2) {
+        if (erasing) {
             erasing = false;
             // fade out
             brushOutline.classList.add("sdmcd-fading");
