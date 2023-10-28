@@ -30,6 +30,7 @@ General:
 -   Esc - Close modal / Exit drawing mode
 -   ↑ / Scroll up - Increase brush size
 -   ↓ / Scroll down - Decrease brush size
+-   S - Reset brush size
 -   Ctrl + Z - Undo
 -   Ctrl + Y - Redo
 -   T - Toggle between overlay and whiteboard mode
