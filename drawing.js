@@ -13,6 +13,7 @@
     let lastX, lastY;
     let brushOutline;
     let brushOutlineFadeTimeout;
+    let popup;
 
     let whiteboard = false;
 
@@ -137,6 +138,11 @@
     }
 
     function scroll(e) {
+        e.preventDefault();
+
+        // void if popup open
+        if (popup && document.body.contains(popup)) return;
+
         // increase/decrease brush size with scroll wheel
         if (e.deltaY > 0) {
             size -= 1;
@@ -148,7 +154,6 @@
         }
         ctx.lineWidth = size;
         displayBrushOutline();
-        e.preventDefault();
     }
 
     function drawLine() {
@@ -535,6 +540,8 @@
         popupBg.appendChild(popupContent);
         document.body.appendChild(popupBg);
 
+        popup = popupBg;
+        console.log(popup);
         return popupContent;
     }
 
