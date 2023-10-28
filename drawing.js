@@ -63,11 +63,25 @@
 
         // start drawing if LMB or touch (and not erasing)
         if ((e.button === 0 || e.button === undefined) && !erasing) {
+            // reset size and color from potential previous erasing
+            ctx.lineWidth = size;
+            ctx.globalCompositeOperation = "source-over";
+            applyColor();
             drawing = true;
         }
 
         // start erasing if RMB (and not drawing)
         if (e.button === 2 && !drawing) {
+            // erase with larger brush
+            ctx.lineWidth = Math.max(size, 30);
+            // erase based on whether canvas is whiteboard or not
+            if (whiteboard) {
+                ctx.fillStyle = "#FFFFFF";
+                ctx.strokeStyle = "#FFFFFF";
+                ctx.globalCompositeOperation = "source-over";
+            } else {
+                ctx.globalCompositeOperation = "destination-out";
+            }
             erasing = true;
             displayBrushOutline();
         }
@@ -142,31 +156,13 @@
         const previous = history[history.length - 1].data;
         ctx.putImageData(previous, 0, 0);
 
-        // this is in a temp variable for single point access
-        let tempSize = size;
-
-        // erase with larger brush
-        if (erasing) {
-            tempSize = Math.max(size, 30);
-            ctx.lineWidth = tempSize;
-
-            // erase based on whether canvas is whiteboard or not
-            if (whiteboard) {
-                ctx.globalCompositeOperation = "source-over";
-                ctx.fillStyle = "#FFFFFF";
-                ctx.strokeStyle = "#FFFFFF";
-            } else {
-                ctx.globalCompositeOperation = "destination-out";
-            }
-        }
-
         // https://stackoverflow.com/a/10568043/19271522
 
         // draw a single point
         if (points.length < 4) {
             var b = points[0];
             ctx.beginPath();
-            ctx.arc(b.x, b.y, tempSize / 2, 0, Math.PI * 2, !0);
+            ctx.arc(b.x, b.y, ctx.lineWidth / 2, 0, Math.PI * 2, !0);
             ctx.closePath();
             ctx.fill();
         } else {
@@ -180,13 +176,6 @@
             }
             ctx.quadraticCurveTo(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
             ctx.stroke();
-        }
-
-        // reset settings
-        if (erasing) {
-            ctx.lineWidth = size;
-            ctx.globalCompositeOperation = "source-over";
-            applyColor();
         }
     }
 
@@ -376,6 +365,7 @@
 
     function switchMode(saveSnapshot) {
         whiteboard = !whiteboard;
+        ctx.globalCompositeOperation = "source-over";
         if (whiteboard) {
             // save snapshot of current canvas to history (with mode switch)
             if (saveSnapshot) {
