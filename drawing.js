@@ -449,6 +449,10 @@
     function showColorPopup() {
         const popupContent = createPopup();
 
+        const colorContent = document.createElement("div");
+        colorContent.id = "sdmcd-color-content";
+        popupContent.appendChild(colorContent);
+
         const colorPicker = document.createElement("input");
         colorPicker.id = "sdmcd-color";
         colorPicker.type = "color";
@@ -458,8 +462,8 @@
             applyColor();
         });
 
-        popupContent.textContent = "Color:";
-        popupContent.appendChild(colorPicker);
+        colorContent.textContent = "Color:";
+        colorContent.appendChild(colorPicker);
     }
 
     function showHelpPopup() {
@@ -551,7 +555,7 @@
         const style = document.createElement("style");
         style.id = "sdmcd-css";
         style.innerHTML =
-            "#sdmcd-canvas{position:fixed;top:0;left:0;z-index:9999997;cursor:crosshair}#sdmcd-popup-bg{position:fixed;top:0;left:0;z-index:9999999;width:100vw;height:100vh;background-color:rgba(0,0,0,.8);display:flex;justify-content:center;align-items:center;font-size:2rem;color:#fff;font-family:Helvetica,sans-serif}#sdmcd-popup-content{display:flex;flex-direction:column;justify-content:center;align-items:center;pointer-events:none}#sdmcd-popup-content.sdmcd-horizontal{flex-direction:row}.sdmcd-help-section{display:flex;flex-direction:column;justify-content:center;align-items:center;width:35vw}.sdmcd-help-line{font-size:1.5vw;height:1.6em;margin:0}#sdmcd-color{width:10em;height:10em;border-radius:.5em;padding:0;border:none;outline:0;cursor:pointer;pointer-events:auto}#sdmcd-color::-webkit-color-swatch-wrapper{padding:0}#sdmcd-color::-webkit-color-swatch{border:none;border-radius:.5em}#sdmcd-brush-outline{position:fixed;border-radius:50%;border:1px solid #888;pointer-events:none;z-index:9999998}#sdmcd-brush-outline.sdmcd-fading{opacity:0;transition:opacity .5s}";
+            "#sdmcd-canvas{position:fixed;top:0;left:0;z-index:9999997;cursor:crosshair}#sdmcd-popup-bg{position:fixed;top:0;left:0;z-index:9999999;width:100vw;height:100vh;background-color:rgba(0,0,0,.8);display:flex;justify-content:center;align-items:center;font-size:1vw;color:#fff;font-family:Helvetica,sans-serif}#sdmcd-popup-content{display:flex;flex-direction:column;justify-content:center;align-items:center;pointer-events:none}#sdmcd-popup-content.sdmcd-horizontal{flex-direction:row}.sdmcd-help-section{display:flex;flex-direction:column;justify-content:center;align-items:center;width:35em}.sdmcd-help-line{font-size:1.5em;height:1.6em;margin:0;color:#fff}#sdmcd-color-content{font-size:2em;display:flex;flex-direction:column;align-items:center;gap:.2em}#sdmcd-color{width:20em;height:20em;border-radius:1em;padding:0;border:none;outline:0;cursor:pointer;pointer-events:auto}#sdmcd-color::-webkit-color-swatch-wrapper{padding:0}#sdmcd-color::-webkit-color-swatch{border:none;border-radius:.5em}#sdmcd-brush-outline{position:fixed;border-radius:50%;border:1px solid #888;pointer-events:none;z-index:9999998}#sdmcd-brush-outline.sdmcd-fading{opacity:0;transition:opacity .5s}";
         document.head.appendChild(style);
     }
 })();
