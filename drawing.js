@@ -7,6 +7,7 @@
     let drawing = false;
     let erasing = false;
     let unfocused = false;
+    let hidden = false;
     let history = [];
     let redoHistory = [];
     let points = [];
