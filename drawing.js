@@ -33,7 +33,6 @@
 
         ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-        // How thick the lines should be
         ctx.lineWidth = size;
         ctx.lineJoin = "round";
         ctx.lineCap = "round";
@@ -53,6 +52,10 @@
         document.sdmcdKeyAborter.abort();
         document.getElementById("sdmcd-canvas")?.remove();
         document.getElementById("sdmcd-popup-bg")?.remove();
+        // clear text inputs
+        for (const input of document.getElementsByClassName("sdmcd-text-input")) {
+            input.remove();
+        }
     }
 
     function contextMenu(e) {
@@ -62,6 +65,9 @@
     function pointerDown(e) {
         // don't draw if popup is open
         if (document.getElementById("sdmcd-popup-bg")) return;
+
+        // ignore in text inputs
+        if (e.target.classList.contains("sdmcd-text-input")) return;
 
         // start drawing if LMB or touch
         if (e.button === 0 || e.button === undefined) {
@@ -88,11 +94,14 @@
             displayBrushOutline();
         }
 
-        // ignore click if not drawing or erasing
-        if (!drawing && !erasing) return;
-
-        // save snapshot of current canvas to history
-        history.push({ data: ctx.getImageData(0, 0, canvas.width, canvas.height) });
+        // text input if middle click
+        if (e.button === 1) {
+            textInput(e.clientX, e.clientY);
+            e.preventDefault();
+        } else {
+            // save snapshot of current canvas to history
+            history.push({ data: ctx.getImageData(0, 0, canvas.width, canvas.height) });
+        }
 
         // clear redo history
         redoHistory = [];
@@ -158,6 +167,39 @@
         displayBrushOutline();
     }
 
+    function textInput(x, y) {
+        const input = document.createElement("div");
+        input.contentEditable = true;
+        input.type = "text";
+        input.classList.add("sdmcd-text-input");
+        input.style.color = color;
+        input.style.fontSize = 2.5 * size + 20 + "px";
+        input.style.top = y - 1.5 * size - 15 + "px";
+        input.style.left = x + "px";
+        // uniquely identify text input
+        input.id = "sdmcd-text-input-" + Date.now();
+        document.body.appendChild(input);
+        input.focus();
+
+        // take a snapshot every time text is focused
+        input.addEventListener("focus", () => {
+            history.push({ textId: input.id, text: input.textContent });
+            redoHistory = [];
+        });
+
+        // remove on right click
+        input.addEventListener("mousedown", (e) => {
+            if (e.button === 2) {
+                e.preventDefault();
+                input.classList.toggle("removed");
+                history.push({ textId: input.id });
+                redoHistory = [];
+            }
+        });
+
+        history.push({ textId: input.id });
+    }
+
     function drawLine() {
         // revert to previous state to draw new line
         const previous = history[history.length - 1].data;
@@ -193,6 +235,16 @@
     function keyDown(e) {
         let popup;
         let captured = true;
+
+        if (e.key === "Escape" && document.activeElement.classList.contains("sdmcd-text-input")) {
+            document.activeElement.blur();
+            return;
+        }
+
+        // ignore key presses in text inputs
+        // unless they're ctrl shortcuts
+        if (document.activeElement.classList.contains("sdmcd-text-input") && !e.ctrlKey) return;
+
         switch (e.key) {
             case "Escape":
                 // close popup if open
@@ -298,9 +350,32 @@
                     if (previous.switch) {
                         switchMode(false);
                     }
-                    ctx.putImageData(previous.data, 0, 0);
-                    // save current canvas to redo history
-                    redoHistory.push({ data: current, switch: previous.switch });
+
+                    if (previous.data) ctx.putImageData(previous.data, 0, 0);
+
+                    if (previous.activeTextInputs) {
+                        // restore whiteboard texts
+                        for (const inputId of previous.activeTextInputs) {
+                            const input = document.getElementById(inputId);
+                            input.classList.remove("removed");
+                        }
+                        redoHistory.push({ data: current, activeTextInputs: previous.activeTextInputs, switch: previous.switch });
+                    } else if (previous.textId) {
+                        document.activeElement.blur();
+                        const input = document.getElementById(previous.textId);
+                        if (previous.text) {
+                            // previous action was a text edit
+                            redoHistory.push({ data: current, textId: previous.textId, text: input.textContent });
+                            input.textContent = previous.text;
+                        } else {
+                            // previous action was a text input (init)
+                            redoHistory.push({ data: current, textId: previous.textId });
+                            input.classList.toggle("removed");
+                        }
+                    } else {
+                        // save current canvas to redo history
+                        redoHistory.push({ data: current, switch: previous.switch });
+                    }
                 }
                 break;
             case "y":
@@ -312,9 +387,31 @@
                     if (next.switch) {
                         switchMode(false);
                     }
-                    ctx.putImageData(next.data, 0, 0);
-                    // save current canvas to history
-                    history.push({ data: current, switch: next.switch });
+                    if (next.data) ctx.putImageData(next.data, 0, 0);
+
+                    if (next.activeTextInputs) {
+                        // restore whiteboard texts
+                        for (const inputId of next.activeTextInputs) {
+                            const input = document.getElementById(inputId);
+                            input.classList.add("removed");
+                        }
+                        history.push({ data: current, activeTextInputs: next.activeTextInputs, switch: next.switch });
+                    } else if (next.textId) {
+                        document.activeElement.blur();
+                        const input = document.getElementById(next.textId);
+                        if (next.text) {
+                            // previous action was a text edit
+                            history.push({ data: current, textId: next.textId, text: input.textContent });
+                            input.textContent = next.text;
+                        } else {
+                            // previous action was a text input (init)
+                            history.push({ data: current, textId: next.textId });
+                            input.classList.toggle("removed");
+                        }
+                    } else {
+                        // save current canvas to redo history
+                        history.push({ data: current, switch: next.switch });
+                    }
                 } else {
                     color = "#FFFF00";
                     break;
@@ -343,11 +440,11 @@
     function applyUnfocus() {
         if (unfocused) {
             hidden = false;
-            canvas.style.display = "block";
-            canvas.style.pointerEvents = "none";
+            document.body.classList.add("sdmcd-unfocused");
+            document.body.classList.remove("sdmcd-hidden");
             removeMouseListeners();
         } else {
-            canvas.style.pointerEvents = "auto";
+            document.body.classList.remove("sdmcd-unfocused");
             addMouseListeners();
         }
     }
@@ -355,12 +452,11 @@
     function applyHide() {
         if (hidden) {
             unfocused = false;
-            canvas.style.pointerEvents = "none";
-            canvas.style.display = "none";
+            document.body.classList.add("sdmcd-hidden");
+            document.body.classList.remove("sdmcd-unfocused");
             removeMouseListeners();
         } else {
-            canvas.style.pointerEvents = "auto";
-            canvas.style.display = "block";
+            document.body.classList.remove("sdmcd-hidden");
             addMouseListeners();
         }
     }
@@ -373,10 +469,15 @@
     function switchMode(saveSnapshot) {
         whiteboard = !whiteboard;
         ctx.globalCompositeOperation = "source-over";
+        /* grab all the active text inputs and save their ids so they can be restored
+           with undo */
+        const activeTextElms = document.querySelectorAll(".sdmcd-text-input:not(.removed)");
+        const texts = [...activeTextElms].map((input) => input.id);
+        activeTextElms.forEach((input) => input.classList.add("removed"));
         if (whiteboard) {
             // save snapshot of current canvas to history (with mode switch)
             if (saveSnapshot) {
-                history.push({ switch: true, data: ctx.getImageData(0, 0, canvas.width, canvas.height) });
+                history.push({ switch: true, activeTextInputs: texts, data: ctx.getImageData(0, 0, canvas.width, canvas.height) });
             }
             ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -384,12 +485,13 @@
             applyColor();
         } else {
             if (saveSnapshot) {
-                history.push({ switch: true, data: ctx.getImageData(0, 0, canvas.width, canvas.height) });
+                history.push({ switch: true, activeTextInputs: texts, data: ctx.getImageData(0, 0, canvas.width, canvas.height) });
             }
             color = "#FF0000";
             applyColor();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
+        redoHistory = [];
     }
 
     function addMouseListeners() {
@@ -557,7 +659,7 @@
         const style = document.createElement("style");
         style.id = "sdmcd-css";
         style.innerHTML =
-            "#sdmcd-canvas{position:fixed;top:0;left:0;z-index:9999997;cursor:crosshair}#sdmcd-popup-bg{position:fixed;top:0;left:0;z-index:9999999;width:100vw;height:100vh;background-color:rgba(0,0,0,.8);display:flex;justify-content:center;align-items:center;font-size:1vw;color:#fff;font-family:Helvetica,sans-serif}#sdmcd-popup-content{display:flex;flex-direction:column;justify-content:center;align-items:center;pointer-events:none}#sdmcd-popup-content.sdmcd-horizontal{flex-direction:row}.sdmcd-help-section{display:flex;flex-direction:column;justify-content:center;align-items:center;width:35em}.sdmcd-help-line{font-size:1.5em;height:1.6em;margin:0;color:#fff}#sdmcd-color-content{font-size:2em;display:flex;flex-direction:column;align-items:center;gap:.2em}#sdmcd-color{width:20em;height:20em;border-radius:1em;padding:0;border:none;outline:0;cursor:pointer;pointer-events:auto}#sdmcd-color::-webkit-color-swatch-wrapper{padding:0}#sdmcd-color::-webkit-color-swatch{border:none;border-radius:.5em}#sdmcd-brush-outline{position:fixed;border-radius:50%;border:1px solid #888;pointer-events:none;z-index:9999998}#sdmcd-brush-outline.sdmcd-fading{opacity:0;transition:opacity .5s}";
+            "#sdmcd-canvas{position:fixed;top:0;left:0;z-index:9999997;cursor:crosshair}.sdmcd-hidden #sdmcd-canvas,.sdmcd-hidden .sdmcd-text-input,.sdmcd-text-input.removed{display:none}.sdmcd-unfocused #sdmcd-canvas,.sdmcd-unfocused .sdmcd-text-input{pointer-events:none}#sdmcd-popup-bg{position:fixed;top:0;left:0;z-index:9999999;width:100vw;height:100vh;background-color:rgba(0,0,0,.8);display:flex;justify-content:center;align-items:center;font-size:1vw;color:#fff;font-family:Helvetica,sans-serif}#sdmcd-popup-content{display:flex;flex-direction:column;justify-content:center;align-items:center;pointer-events:none}#sdmcd-popup-content.sdmcd-horizontal{flex-direction:row}.sdmcd-help-section{display:flex;flex-direction:column;justify-content:center;align-items:center;width:35em}.sdmcd-help-line{font-size:1.5em;height:1.6em;margin:0;color:#fff}#sdmcd-color-content{font-size:2em;display:flex;flex-direction:column;align-items:center;gap:.2em}#sdmcd-color{width:20em;height:20em;border-radius:1em;padding:0;border:none;outline:0;cursor:pointer;pointer-events:auto}#sdmcd-color::-webkit-color-swatch-wrapper{padding:0}#sdmcd-color::-webkit-color-swatch{border:none;border-radius:.5em}#sdmcd-brush-outline{position:fixed;border-radius:50%;border:1px solid #888;pointer-events:none;z-index:9999998}#sdmcd-brush-outline.sdmcd-fading{opacity:0;transition:opacity .5s}.sdmcd-text-input{position:fixed;z-index:9999998;outline:0;border-right:1px solid transparent;font-family:Arial,Helvetica,sans-serif;font-weight:400}";
         document.head.appendChild(style);
     }
 })();

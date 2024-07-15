@@ -6,6 +6,14 @@
     cursor: crosshair;
 }
 
+.sdmcd-hidden #sdmcd-canvas {
+    display: none;
+}
+
+.sdmcd-unfocused #sdmcd-canvas {
+    pointer-events: none;
+}
+
 #sdmcd-popup-bg {
     position: fixed;
     top: 0;
@@ -88,4 +96,27 @@
 #sdmcd-brush-outline.sdmcd-fading {
     opacity: 0;
     transition: opacity 0.5s;
+}
+
+.sdmcd-text-input {
+    position: fixed;
+    z-index: 9999998;
+    outline: none;
+    /* force render even with no text */
+    border-right: solid rgba(0, 0, 0, 0) 1px;
+    /* normalize font */
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 400;
+}
+
+.sdmcd-text-input.removed {
+    display: none;
+}
+
+.sdmcd-hidden .sdmcd-text-input {
+    display: none;
+}
+
+.sdmcd-unfocused .sdmcd-text-input {
+    pointer-events: none;
 }
