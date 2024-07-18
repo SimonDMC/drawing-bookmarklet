@@ -15,6 +15,10 @@
     let brushOutline;
     let brushOutlineFadeTimeout;
     let popup;
+    // 0 = pen/line, 1 = rectangle/square, 2 = ellipse/circle
+    let shape = 0;
+    let shift = false;
+    let shiftTainted = false;
 
     let whiteboard = false;
 
@@ -43,6 +47,7 @@
         // save listener aborter to document to persist across bookmarklet calls
         document.sdmcdKeyAborter = new AbortController();
         window.addEventListener("keydown", keyDown, { capture: true, signal: document.sdmcdKeyAborter.signal });
+        window.addEventListener("keyup", keyUp, { capture: true, signal: document.sdmcdKeyAborter.signal });
     } else {
         removeDrawing();
     }
@@ -143,9 +148,25 @@
 
         if (!drawing && !erasing) return;
 
+        // don't consider a shift press overlapping with drawing as a mode switch since it can be circle/square
+        shiftTainted = true;
+
         // draw line
         points.push({ x: e.clientX, y: e.clientY });
-        drawLine();
+
+        if (erasing || (shape === 0 && !shift)) {
+            drawPen();
+        } else if (shape === 0 && shift) {
+            drawLine();
+        } else if (shape === 1 && !shift) {
+            drawRectangle();
+        } else if (shape === 1 && shift) {
+            drawSquare();
+        } else if (shape === 2 && !shift) {
+            drawEllipse();
+        } else if (shape === 2 && shift) {
+            drawCircle();
+        }
     }
 
     function scroll(e) {
@@ -200,10 +221,14 @@
         history.push({ textId: input.id });
     }
 
-    function drawLine() {
+    function revertState() {
         // revert to previous state to draw new line
         const previous = history[history.length - 1].data;
         ctx.putImageData(previous, 0, 0);
+    }
+
+    function drawPen() {
+        revertState();
 
         // https://stackoverflow.com/a/10568043/19271522
 
@@ -228,6 +253,67 @@
         }
     }
 
+    function drawLine() {
+        revertState();
+
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+        ctx.stroke();
+    }
+
+    function drawRectangle() {
+        revertState();
+
+        const x = Math.min(points[0].x, points[points.length - 1].x);
+        const y = Math.min(points[0].y, points[points.length - 1].y);
+        const width = Math.abs(points[0].x - points[points.length - 1].x);
+        const height = Math.abs(points[0].y - points[points.length - 1].y);
+
+        ctx.strokeRect(x, y, width, height);
+    }
+
+    function drawSquare() {
+        revertState();
+
+        const x = points[0].x;
+        const y = points[0].y;
+        // side length as average of x and y distance
+        const side = (Math.abs(points[0].x - points[points.length - 1].x) + Math.abs(points[0].y - points[points.length - 1].y)) / 2;
+        const width = points[0].x < points[points.length - 1].x ? side : -side;
+        const height = points[0].y < points[points.length - 1].y ? side : -side;
+
+        ctx.strokeRect(x, y, width, height);
+    }
+
+    function drawEllipse() {
+        revertState();
+
+        const x = Math.min(points[0].x, points[points.length - 1].x);
+        const y = Math.min(points[0].y, points[points.length - 1].y);
+        const width = Math.abs(points[0].x - points[points.length - 1].x);
+        const height = Math.abs(points[0].y - points[points.length - 1].y);
+
+        ctx.beginPath();
+        ctx.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    function drawCircle() {
+        revertState();
+
+        const x = points[0].x;
+        const y = points[0].y;
+        const radius =
+            Math.min(Math.abs(points[0].x - points[points.length - 1].x), Math.abs(points[0].y - points[points.length - 1].y)) / 2;
+        const width = points[0].x < points[points.length - 1].x ? radius : -radius;
+        const height = points[0].y < points[points.length - 1].y ? radius : -radius;
+
+        ctx.beginPath();
+        ctx.ellipse(x + width, y + height, radius, radius, 0, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
     function dragStart(e) {
         e.preventDefault();
     }
@@ -235,6 +321,17 @@
     function keyDown(e) {
         let popup;
         let captured = true;
+
+        // keep track of if any key has been pressed while shift is held because a clean
+        // shift keypress is used to switch to pen
+        if (shift) {
+            shiftTainted = true;
+        }
+
+        if (e.key === "Shift" && !shift) {
+            shift = true;
+            shiftTainted = false;
+        }
 
         if (e.key === "Escape" && document.activeElement.classList.contains("sdmcd-text-input")) {
             document.activeElement.blur();
@@ -420,6 +517,12 @@
             case "t":
                 switchMode(true);
                 break;
+            case "R":
+                shape = 1;
+                break;
+            case "C":
+                shape = 2;
+                break;
             case "h":
                 popup = document.getElementById("sdmcd-popup-bg");
                 if (popup) {
@@ -434,6 +537,15 @@
         applyColor();
         if (captured) {
             e.preventDefault();
+        }
+    }
+
+    function keyUp(e) {
+        if (e.key === "Shift") {
+            if (!shiftTainted) {
+                shape = 0;
+            }
+            shift = false;
         }
     }
 
@@ -649,7 +761,6 @@
         document.body.appendChild(popupBg);
 
         popup = popupBg;
-        console.log(popup);
         return popupContent;
     }
 
