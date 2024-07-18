@@ -148,7 +148,7 @@
 
         if (!drawing && !erasing) return;
 
-        // don't consider a shift press overlapping with drawing as a mode switch since it can be circle/square
+        // don't consider a shift press overlapping with drawing as a shape switch since it can be circle/square
         shiftTainted = true;
 
         // draw line
@@ -537,6 +537,7 @@
         applyColor();
         if (captured) {
             e.preventDefault();
+            e.stopPropagation();
         }
     }
 
