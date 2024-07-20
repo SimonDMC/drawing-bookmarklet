@@ -115,7 +115,12 @@
     }
 
     function pointerUp(e) {
-        pointerMove(e);
+        // paint bucket if shift click
+        if (drawing && shift && points.length === 1) {
+            paintBucket(e.clientX, e.clientY);
+        } else {
+            pointerMove(e);
+        }
 
         // don't check for button release as weird button combinations can cause only LMB down and RMB up events to fire (or vice versa)
         if (drawing) {
@@ -186,6 +191,117 @@
         }
         ctx.lineWidth = size;
         displayBrushOutline();
+    }
+
+    // https://web.archive.org/web/20180216002849/http://www.williammalone.com/articles/html5-canvas-javascript-paint-bucket-tool/
+    function paintBucket(startX, startY) {
+        const pixelStack = [[startX, startY]];
+        const colorLayer = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const startColor = getPixelColor(startX, startY);
+        const fillColor = hexToRgb(color);
+
+        // check if the color is already the fill color
+        if (startColor.r === fillColor.r && startColor.g === fillColor.g && startColor.b === fillColor.b) return;
+
+        while (pixelStack.length) {
+            const [x, y] = pixelStack.pop();
+            let pixelPos = (y * canvas.width + x) * 4;
+
+            let y1 = y;
+            while (y1 >= 0 && matchStartColor(pixelPos)) {
+                y1--;
+                pixelPos -= canvas.width * 4;
+            }
+
+            pixelPos += canvas.width * 4;
+            y1++;
+
+            let reachLeft = false;
+            let reachRight = false;
+
+            while (y1 < canvas.height && matchStartColor(pixelPos)) {
+                colorPixel(pixelPos);
+
+                if (x > 0) {
+                    if (matchStartColor(pixelPos - 4)) {
+                        if (!reachLeft) {
+                            pixelStack.push([x - 1, y1]);
+                            reachLeft = true;
+                        }
+                    } else if (reachLeft) {
+                        reachLeft = false;
+                    }
+                }
+
+                if (x < canvas.width - 1) {
+                    if (matchStartColor(pixelPos + 4)) {
+                        if (!reachRight) {
+                            pixelStack.push([x + 1, y1]);
+                            reachRight = true;
+                        }
+                    } else if (reachRight) {
+                        reachRight = false;
+                    }
+                }
+
+                y1++;
+                pixelPos += canvas.width * 4;
+            }
+        }
+
+        ctx.putImageData(colorLayer, 0, 0);
+
+        function getPixelColor(x, y) {
+            const pixelPos = (y * canvas.width + x) * 4;
+            return {
+                r: colorLayer.data[pixelPos],
+                g: colorLayer.data[pixelPos + 1],
+                b: colorLayer.data[pixelPos + 2],
+                a: colorLayer.data[pixelPos + 3],
+            };
+        }
+
+        function hexToRgb(hex) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return { r, g, b, a: 255 };
+        }
+
+        function matchStartColor(pixelPos) {
+            const r = colorLayer.data[pixelPos];
+            const g = colorLayer.data[pixelPos + 1];
+            const b = colorLayer.data[pixelPos + 2];
+            const a = colorLayer.data[pixelPos + 3];
+
+            // fill all semi-transparent pixels otherwise we leave an ugly outline
+            if (a > 0 && a < 255) return true;
+
+            // exact color match
+            if (r === startColor.r && g === startColor.g && b === startColor.b) return true;
+
+            // if the pixel color is a uniform blend between the start and fill color, fill it too
+            /* this is kind of a hack and only works when filling with the color of the outline,
+            otherwise it still leaves the outline, but since that's the main use of filling it's fine */
+            const diffR = Math.abs(startColor.r - fillColor.r) / Math.abs(r - startColor.r);
+            const diffG = Math.abs(startColor.g - fillColor.g) / Math.abs(g - startColor.g);
+            const diffB = Math.abs(startColor.b - fillColor.b) / Math.abs(b - startColor.b);
+
+            const toCompare = [];
+            if (!isNaN(diffR)) toCompare.push(diffR);
+            if (!isNaN(diffG)) toCompare.push(diffG);
+            if (!isNaN(diffB)) toCompare.push(diffB);
+
+            // check if all the relative differences are the same
+            return toCompare.length > 0 && toCompare.every((val, i, arr) => val === arr[0]) && toCompare[0] != 1;
+        }
+
+        function colorPixel(pixelPos) {
+            colorLayer.data[pixelPos] = fillColor.r;
+            colorLayer.data[pixelPos + 1] = fillColor.g;
+            colorLayer.data[pixelPos + 2] = fillColor.b;
+            colorLayer.data[pixelPos + 3] = fillColor.a;
+        }
     }
 
     function textInput(x, y) {
