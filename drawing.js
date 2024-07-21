@@ -539,6 +539,8 @@
                 color = "#00FFFF";
                 break;
             case "c":
+                // don't open popup if drawing
+                if (drawing || erasing) break;
                 popup = document.getElementById("sdmcd-popup-bg");
                 if (popup) {
                     popup.remove();
@@ -653,6 +655,8 @@
                 shape = 2;
                 break;
             case "h":
+                // don't open popup if drawing
+                if (drawing || erasing) break;
                 popup = document.getElementById("sdmcd-popup-bg");
                 if (popup) {
                     popup.remove();
