@@ -86,7 +86,7 @@
         // start erasing if RMB
         if (e.button === 2) {
             // erase with larger brush
-            ctx.lineWidth = Math.max(size, 30);
+            ctx.lineWidth = Math.max(size * 1.5, 30);
             // erase based on whether canvas is whiteboard or not
             if (whiteboard) {
                 ctx.fillStyle = "#FFFFFF";
@@ -137,10 +137,10 @@
     function pointerMove(e) {
         // move brush outline to mouse position
         if (brushOutline) {
-            // match erasing brush size if erasing
+            // make brush larger if erasing
             let outlineSize = size;
             if (brushOutline.classList.contains("sdmcd-erasing")) {
-                outlineSize = Math.max(size, 30);
+                outlineSize = Math.max(size * 1.5, 30);
             }
 
             brushOutline.style.top = e.clientY - outlineSize / 2 - 1 + "px";
@@ -177,7 +177,7 @@
                 drawCircle();
             }
         } else if (erasing) {
-            drawPen();
+            erase();
         }
     }
 
@@ -339,7 +339,7 @@
         });
 
         // remove on right click
-        input.addEventListener("mousedown", (e) => {
+        input.addEventListener("pointerdown", (e) => {
             if (e.button === 2) {
                 e.preventDefault();
                 input.classList.toggle("removed");
@@ -441,6 +441,26 @@
 
         ctx.beginPath();
         ctx.ellipse(x + width, y + height, radius, radius, 0, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    function erase() {
+        // this isn't a perfect algo but it means that we don't redraw the entire canvas every time
+        // and for erasing it's definitely good enough
+        if (points.length < 4) {
+            var b = points[0];
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, ctx.lineWidth / 2, 0, Math.PI * 2, !0);
+            ctx.closePath();
+            ctx.fill();
+            return;
+        }
+        const point1 = points[points.length - 4];
+        const point2 = points[points.length - 2];
+        const point3 = points[points.length - 1];
+        ctx.beginPath();
+        ctx.moveTo(point1.x, point1.y);
+        ctx.quadraticCurveTo(point3.x, point3.y, point2.x, point2.y);
         ctx.stroke();
     }
 
@@ -783,10 +803,10 @@
         // cancel fade
         clearTimeout(brushOutlineFadeTimeout);
 
-        // match erasing brush size if erasing and add class for use in pointermove
+        // make brush larger if erasing and add class for use in pointermove
         let outlineSize = size;
         if (erasing) {
-            outlineSize = Math.max(size, 30);
+            outlineSize = Math.max(size * 1.5, 30);
             brushOutline.classList.add("sdmcd-erasing");
         }
 
