@@ -446,6 +446,14 @@
         let popup;
         let captured = true;
 
+        // ignore key presses in text inputs
+        // except ctrl shortcuts
+        if (document.activeElement.classList.contains("sdmcd-text-input") && !e.ctrlKey) return;
+
+        // ignore key presses when unfocused/hidden
+        // except F1 while unfocused/hidden and F while unfocused
+        if (!(!(unfocused || hidden) || (e.key == "F1" && (unfocused || hidden)) || (e.key == "f" && unfocused))) return;
+
         // keep track of if any key has been pressed while shift is held because a clean
         // shift keypress is used to switch to pen
         if (shift) {
@@ -461,10 +469,6 @@
             document.activeElement.blur();
             return;
         }
-
-        // ignore key presses in text inputs
-        // unless they're ctrl shortcuts
-        if (document.activeElement.classList.contains("sdmcd-text-input") && !e.ctrlKey) return;
 
         switch (e.key) {
             case "Escape":
@@ -681,7 +685,6 @@
         if (unfocused) {
             hidden = false;
             document.body.classList.add("sdmcd-unfocused");
-            document.body.classList.remove("sdmcd-hidden");
             removeMouseListeners();
         } else {
             document.body.classList.remove("sdmcd-unfocused");
