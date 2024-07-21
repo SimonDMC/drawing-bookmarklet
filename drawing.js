@@ -184,6 +184,8 @@
     function scroll(e) {
         e.preventDefault();
 
+        if (!e.shiftKey) return;
+
         // void if popup open
         if (popup && document.body.contains(popup)) return;
 
