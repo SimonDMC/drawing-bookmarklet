@@ -203,6 +203,10 @@
 
     // https://web.archive.org/web/20180216002849/http://www.williammalone.com/articles/html5-canvas-javascript-paint-bucket-tool/
     function paintBucket(startX, startY) {
+        // reset to last snapshot to get the correct start color
+        const previous = history[history.length - 1];
+        ctx.putImageData(previous.data, 0, 0);
+
         const pixelStack = [[startX, startY]];
         const colorLayer = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const startColor = getPixelColor(startX, startY);
