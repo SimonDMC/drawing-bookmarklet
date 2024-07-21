@@ -3,6 +3,8 @@
     document.sdmcd = !document.sdmcd;
 
     let size = 5;
+    // this var is only used as a "mirror" of brush size and is appropriately scaled during text creation
+    let fontSize = 5;
     let color = "#FF0000";
     let drawing = false;
     let erasing = false;
@@ -184,6 +186,20 @@
     function scroll(e) {
         e.preventDefault();
 
+        // change font size with scroll if in text input
+        if (document.activeElement.classList.contains("sdmcd-text-input")) {
+            if (e.deltaY > 0) {
+                fontSize -= 1;
+            } else {
+                fontSize += 1;
+            }
+            if (fontSize < 1) {
+                fontSize = 1;
+            }
+            document.activeElement.style.fontSize = 2.5 * fontSize + 20 + "px";
+            return;
+        }
+
         if (!e.shiftKey) return;
 
         // void if popup open
@@ -199,6 +215,7 @@
             size = 1;
         }
         ctx.lineWidth = size;
+        fontSize = size;
         displayBrushOutline();
         render();
     }
@@ -324,8 +341,8 @@
         input.type = "text";
         input.classList.add("sdmcd-text-input");
         input.style.color = color;
-        input.style.fontSize = 2.5 * size + 20 + "px";
-        input.style.top = y - 1.5 * size - 15 + "px";
+        input.style.fontSize = 2.5 * fontSize + 20 + "px";
+        input.style.top = y - 1.5 * fontSize - 15 + "px";
         input.style.left = x + "px";
         // uniquely identify text input
         input.id = "sdmcd-text-input-" + Date.now();
@@ -472,6 +489,11 @@
         let popup;
         let captured = true;
 
+        if (e.key === "Escape" && document.activeElement.classList.contains("sdmcd-text-input")) {
+            document.activeElement.blur();
+            return;
+        }
+
         // ignore key presses in text inputs
         // except ctrl shortcuts
         if (document.activeElement.classList.contains("sdmcd-text-input") && !e.ctrlKey) return;
@@ -489,11 +511,6 @@
         if (e.key === "Shift" && !shift) {
             shift = true;
             shiftTainted = false;
-        }
-
-        if (e.key === "Escape" && document.activeElement.classList.contains("sdmcd-text-input")) {
-            document.activeElement.blur();
-            return;
         }
 
         switch (e.key) {
@@ -577,6 +594,7 @@
             case "ArrowUp":
                 size += 1;
                 ctx.lineWidth = size;
+                fontSize = size;
                 displayBrushOutline();
                 break;
             case "ArrowDown":
@@ -585,6 +603,7 @@
                     size = 1;
                 }
                 ctx.lineWidth = size;
+                fontSize = size;
                 displayBrushOutline();
                 break;
             case "f":
