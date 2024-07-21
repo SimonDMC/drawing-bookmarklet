@@ -156,21 +156,28 @@
         // don't consider a shift press overlapping with drawing as a shape switch since it can be circle/square
         shiftTainted = true;
 
-        // draw line
         points.push({ x: e.clientX, y: e.clientY });
 
-        if (erasing || (shape === 0 && !shift)) {
+        render();
+    }
+
+    function render() {
+        if (drawing) {
+            if (shape === 0 && !shift) {
+                drawPen();
+            } else if (shape === 0 && shift) {
+                drawLine();
+            } else if (shape === 1 && !shift) {
+                drawRectangle();
+            } else if (shape === 1 && shift) {
+                drawSquare();
+            } else if (shape === 2 && !shift) {
+                drawEllipse();
+            } else if (shape === 2 && shift) {
+                drawCircle();
+            }
+        } else if (erasing) {
             drawPen();
-        } else if (shape === 0 && shift) {
-            drawLine();
-        } else if (shape === 1 && !shift) {
-            drawRectangle();
-        } else if (shape === 1 && shift) {
-            drawSquare();
-        } else if (shape === 2 && !shift) {
-            drawEllipse();
-        } else if (shape === 2 && shift) {
-            drawCircle();
         }
     }
 
@@ -191,6 +198,7 @@
         }
         ctx.lineWidth = size;
         displayBrushOutline();
+        render();
     }
 
     // https://web.archive.org/web/20180216002849/http://www.williammalone.com/articles/html5-canvas-javascript-paint-bucket-tool/
@@ -518,6 +526,7 @@
                 break;
             case "p":
                 color = "#800080";
+                render();
                 break;
             case "m":
                 color = "#FF00FF";
@@ -651,6 +660,7 @@
                 captured = false;
         }
         applyColor();
+        render();
         if (captured) {
             e.preventDefault();
             e.stopPropagation();
@@ -663,6 +673,7 @@
                 shape = 0;
             }
             shift = false;
+            render();
         }
     }
 
