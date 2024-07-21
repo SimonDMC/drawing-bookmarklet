@@ -1,0 +1,2 @@
+# Minify bookmarklet
+terser drawing.js -o drawing.min.js -c --mangle
