@@ -549,6 +549,7 @@
                 } else {
                     // reset stroke width
                     size = 5;
+                    fontSize = 5;
                     ctx.lineWidth = 5;
                     displayBrushOutline();
                 }
@@ -865,66 +866,73 @@
     function showHelpPopup() {
         const popupContent = createPopup();
 
-        const leftHelpLines = [
-            "General:",
-            "E - Erase the canvas",
-            "Esc - Close modal / Exit drawing mode",
-            "",
-            "↑ / Scroll up - Increase brush size",
-            "↓ / Scroll down - Decrease brush size",
-            "S - Reset brush size",
-            "",
-            "Ctrl + Z - Undo",
-            "Ctrl + Y - Redo",
-            "T - Toggle between overlay and whiteboard mode",
-            "F - Focus page content without hiding drawing",
-            "F1 - Hide drawing and focus page content",
-            "Ctrl + S - Save drawing as image",
-            "",
-            "H - Open this help menu",
-        ];
-
-        const rightHelpLines = [
-            "Colors:",
-            "C - Open color picker",
-            "",
-            "W - White",
-            "B - Black",
-            "",
-            "R - Red",
-            "G - Green",
-            "L - Blue",
-            "",
-            "Y - Yellow",
-            "O - Orange",
-            "P - Purple",
-            "M - Magenta",
-            "A - Aqua",
-        ];
+        const helpBg = document.createElement("div");
+        helpBg.id = "sdmcd-help-bg";
+        popupContent.appendChild(helpBg);
 
         const left = document.createElement("div");
-        left.classList.add("sdmcd-help-section");
-        popupContent.appendChild(left);
+        left.id = "sdmcd-help-left";
+        left.innerHTML = `<h3>General</h3>`;
+        helpBg.appendChild(left);
 
         const right = document.createElement("div");
-        right.classList.add("sdmcd-help-section");
-        popupContent.appendChild(right);
+        right.id = "sdmcd-help-right";
+        right.innerHTML = `<h3>Colors</h3>`;
+        helpBg.appendChild(right);
 
-        for (const line of leftHelpLines) {
-            const p = document.createElement("p");
-            p.textContent = line;
-            p.classList.add("sdmcd-help-line");
-            left.appendChild(p);
-        }
+        const helpLines = [
+            [1, "Left Click", "Draw"],
+            [1, "Right Click", "Erase"],
+            [1, "Middle Click", "Add text"],
+            [1],
+            [1, "Shift", "Switch to freehand"],
+            [1, "Shift + R", "Switch to rectangle"],
+            [1, "Shift + C", "Switch to circle"],
+            [1, "Shift + Click", "Fill color"],
+            [1],
+            [1, "E", "Erase canvas"],
+            [1, "T", "Toggle whiteboard mode"],
+            [1, "Shift + Scroll", "Change brush size"],
+            [1],
+            [1, "F", "Focus page content"],
+            [1, "F1", "Hide drawing"],
+            [1],
+            [1, "Ctrl + Z", "Undo"],
+            [1, "Ctrl + Y", "Redo"],
+            [1, "Ctrl + S", "Save as image"],
+            [1],
+            [1, "H", "Show keybinds"],
+            [1, "Esc", "Close modal / Exit drawing"],
+            [2, "W", "White"],
+            [2, "B", "Black"],
+            [2, "R", "Red"],
+            [2, "G", "Green"],
+            [2, "L", "Blue"],
+            [2, "Y", "Yellow"],
+            [2, "O", "Orange"],
+            [2, "P", "Purple"],
+            [2, "M", "Magenta"],
+            [2, "A", "Aqua"],
+            [2],
+            [2, "C", "Custom color"],
+        ];
 
-        for (const line of rightHelpLines) {
-            const p = document.createElement("p");
-            p.textContent = line;
-            p.classList.add("sdmcd-help-line");
-            right.appendChild(p);
-        }
-
-        popupContent.classList.add("sdmcd-horizontal");
+        helpLines.forEach(([column, key, value]) => {
+            const div = document.createElement("div");
+            div.classList.add("sdmcd-help-line");
+            if (key && value) {
+                key = key
+                    .split(" + ")
+                    .map((k) => `<code>${k}</code>`)
+                    .join(" + ");
+                div.innerHTML = `<span>${key}</span><span>${value}</span>`;
+            }
+            if (column === 1) {
+                left.appendChild(div);
+            } else {
+                right.appendChild(div);
+            }
+        });
     }
 
     function createPopup() {
@@ -950,7 +958,7 @@
         const style = document.createElement("style");
         style.id = "sdmcd-css";
         style.innerHTML =
-            "#sdmcd-canvas{position:fixed;top:0;left:0;z-index:9999997;cursor:crosshair}.sdmcd-hidden #sdmcd-canvas,.sdmcd-hidden .sdmcd-text-input,.sdmcd-text-input.removed{display:none}.sdmcd-unfocused #sdmcd-canvas,.sdmcd-unfocused .sdmcd-text-input{pointer-events:none}#sdmcd-popup-bg{position:fixed;top:0;left:0;z-index:9999999;width:100vw;height:100vh;background-color:rgba(0,0,0,.8);display:flex;justify-content:center;align-items:center;font-size:1vw;color:#fff;font-family:Helvetica,sans-serif}#sdmcd-popup-content{display:flex;flex-direction:column;justify-content:center;align-items:center;pointer-events:none}#sdmcd-popup-content.sdmcd-horizontal{flex-direction:row}.sdmcd-help-section{display:flex;flex-direction:column;justify-content:center;align-items:center;width:35em}.sdmcd-help-line{font-size:1.5em;height:1.6em;margin:0;color:#fff}#sdmcd-color-content{font-size:2em;display:flex;flex-direction:column;align-items:center;gap:.2em}#sdmcd-color{width:20em;height:20em;border-radius:1em;padding:0;border:none;outline:0;cursor:pointer;pointer-events:auto}#sdmcd-color::-webkit-color-swatch-wrapper{padding:0}#sdmcd-color::-webkit-color-swatch{border:none;border-radius:.5em}#sdmcd-brush-outline{position:fixed;border-radius:50%;border:1px solid #888;pointer-events:none;z-index:9999998}#sdmcd-brush-outline.sdmcd-fading{opacity:0;transition:opacity .5s}.sdmcd-text-input{position:fixed;z-index:9999998;outline:0;border-right:1px solid transparent;font-family:Arial,Helvetica,sans-serif;font-weight:400}";
+            "#sdmcd-canvas{position:fixed;top:0;left:0;z-index:9999997;cursor:crosshair}.sdmcd-hidden #sdmcd-canvas,.sdmcd-hidden .sdmcd-text-input,.sdmcd-text-input.removed{display:none}.sdmcd-unfocused #sdmcd-canvas,.sdmcd-unfocused .sdmcd-text-input{pointer-events:none}#sdmcd-popup-bg{position:fixed;top:0;left:0;z-index:9999999;width:100vw;height:100vh;background-color:rgba(0,0,0,.8);display:flex;justify-content:center;align-items:center;font-size:1vw;color:#fff;font-family:Helvetica,sans-serif}#sdmcd-popup-content{display:flex;flex-direction:column;justify-content:center;align-items:center;pointer-events:none}#sdmcd-help-bg{display:flex;width:45em;background-color:#2b2b2e;color:#fff;font-family:Arial,sans-serif;font-size:min(1.25em, 2vw, 2vh);padding:1em 2.5em;gap:3em;pointer-events:all;border-radius:.5em}#sdmcd-help-left,#sdmcd-help-right{flex:1;padding:1em}#sdmcd-help-bg #sdmcd-help-left{flex:1.7}#sdmcd-help-bg h3{font-size:1.3em;margin-bottom:.8em}.sdmcd-help-line{display:flex;justify-content:space-between;height:1.5em;border-bottom:1px solid #ffffff22;margin:.2em 0}.sdmcd-help-line code{background-color:#222124;padding:.1em .3em;border-radius:.2em;text-transform:uppercase}#sdmcd-color-content{font-size:2em;display:flex;flex-direction:column;align-items:center;gap:.2em}#sdmcd-color{width:20em;height:20em;border-radius:1em;padding:0;border:none;outline:0;cursor:pointer;pointer-events:auto}#sdmcd-color::-webkit-color-swatch-wrapper{padding:0}#sdmcd-color::-webkit-color-swatch{border:none;border-radius:.5em}#sdmcd-brush-outline{position:fixed;border-radius:50%;border:1px solid #888;pointer-events:none;z-index:9999998}#sdmcd-brush-outline.sdmcd-fading{opacity:0;transition:opacity .5s}.sdmcd-text-input{position:fixed;z-index:9999998;outline:0;border-right:1px solid transparent;font-family:Arial,Helvetica,sans-serif;font-weight:400}";
         document.head.appendChild(style);
     }
 })();

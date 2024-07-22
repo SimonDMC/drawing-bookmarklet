@@ -38,23 +38,47 @@
     pointer-events: none;
 }
 
-#sdmcd-popup-content.sdmcd-horizontal {
-    flex-direction: row;
+#sdmcd-help-bg {
+    display: flex;
+    width: 45em;
+    background-color: #2b2b2e;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: min(1.25em, 2vw, 2vh);
+    padding: 1em 2.5em;
+    gap: 3em;
+    pointer-events: all;
+    border-radius: .5em;
 }
 
-.sdmcd-help-section {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 35em;
+#sdmcd-help-left,
+#sdmcd-help-right {
+    flex: 1;
+    padding: 1em;
+}
+
+#sdmcd-help-bg #sdmcd-help-left {
+    flex: 1.7;
+}
+
+#sdmcd-help-bg h3 {
+    font-size: 1.3em;
+    margin-bottom: .8em;
 }
 
 .sdmcd-help-line {
-    font-size: 1.5em;
-    height: 1.6em;
-    margin: 0;
-    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    height: 1.5em;
+    border-bottom: 1px solid #ffffff22;
+    margin: .2em 0;
+}
+
+.sdmcd-help-line code {
+    background-color: #222124;
+    padding: 0.1em 0.3em;
+    border-radius: 0.2em;
+    text-transform: uppercase;
 }
 
 #sdmcd-color-content {
