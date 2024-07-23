@@ -59,6 +59,7 @@
         document.sdmcdKeyAborter.abort();
         document.getElementById("sdmcd-canvas")?.remove();
         document.getElementById("sdmcd-popup-bg")?.remove();
+        document.getElementById("sdmcd-brush-outline")?.remove();
         // clear text inputs
         for (const input of document.getElementsByClassName("sdmcd-text-input")) {
             input.remove();
