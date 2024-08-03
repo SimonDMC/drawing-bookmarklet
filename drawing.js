@@ -51,6 +51,8 @@
         window.addEventListener("keydown", keyDown, { capture: true, signal: document.sdmcdKeyAborter.signal });
         window.addEventListener("keyup", keyUp, { capture: true, signal: document.sdmcdKeyAborter.signal });
     } else {
+        document.body.classList.remove("sdmcd-unfocused");
+        document.body.classList.remove("sdmcd-hidden");
         removeDrawing();
     }
 
