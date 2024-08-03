@@ -497,7 +497,10 @@
 
         // ignore key presses in text inputs
         // except ctrl shortcuts
-        if (document.activeElement.classList.contains("sdmcd-text-input") && !e.ctrlKey) return;
+        if (document.activeElement.classList.contains("sdmcd-text-input") && !e.ctrlKey) {
+            e.stopPropagation();
+            return;
+        }
 
         // ignore key presses when unfocused/hidden
         // except F1 while unfocused/hidden and F while unfocused
