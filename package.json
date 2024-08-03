@@ -1,6 +1,6 @@
 {
     "name": "drawing-bookmarklet",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "description": "An intuitive bookmarklet for drawing over web pages.",
     "main": "drawing.js",
     "scripts": {
