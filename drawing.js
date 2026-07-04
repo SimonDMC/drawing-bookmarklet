@@ -54,8 +54,14 @@
 
         // save listener aborter to document to persist across bookmarklet calls
         document.sdmcdKeyAborter = new AbortController();
-        window.addEventListener("keydown", keyDown, { capture: true, signal: document.sdmcdKeyAborter.signal });
-        window.addEventListener("keyup", keyUp, { capture: true, signal: document.sdmcdKeyAborter.signal });
+        window.addEventListener("keydown", keyDown, {
+            capture: true,
+            signal: document.sdmcdKeyAborter.signal,
+        });
+        window.addEventListener("keyup", keyUp, {
+            capture: true,
+            signal: document.sdmcdKeyAborter.signal,
+        });
         document.sdmcdResizeAborter = new AbortController();
         window.addEventListener("resize", onResize, { signal: document.sdmcdResizeAborter.signal });
     } else {
@@ -72,13 +78,14 @@
         document.getElementById("sdmcd-popup-bg")?.remove();
         document.getElementById("sdmcd-brush-outline")?.remove();
         // clear text inputs
-        document.querySelectorAll(".sdmcd-text-input").forEach(el => el.remove());
+        document.querySelectorAll(".sdmcd-text-input").forEach((el) => el.remove());
     }
 
     function onResize() {
         const dpr = window.devicePixelRatio;
 
-        if (canvas.width > window.innerWidth * dpr && canvas.height > window.innerHeight * dpr) return;
+        if (canvas.width > window.innerWidth * dpr && canvas.height > window.innerHeight * dpr)
+            return;
 
         // create a temporary canvas to store the current content
         const tempCanvas = document.createElement("canvas");
@@ -263,7 +270,12 @@
         const fillColor = hexToRgb(color);
 
         // check if the color is already the fill color
-        if (startColor.r === fillColor.r && startColor.g === fillColor.g && startColor.b === fillColor.b) return;
+        if (
+            startColor.r === fillColor.r &&
+            startColor.g === fillColor.g &&
+            startColor.b === fillColor.b
+        )
+            return;
 
         while (pixelStack.length) {
             const [x, y] = pixelStack.pop();
@@ -355,7 +367,11 @@
             if (!isNaN(diffB)) toCompare.push(diffB);
 
             // check if all the relative differences are the same
-            return toCompare.length > 0 && toCompare.every((val, i, arr) => val === arr[0]) && toCompare[0] != 1;
+            return (
+                toCompare.length > 0 &&
+                toCompare.every((val, i, arr) => val === arr[0]) &&
+                toCompare[0] != 1
+            );
         }
 
         function colorPixel(pixelPos) {
@@ -456,8 +472,10 @@
 
         const x = points[0].x;
         const y = points[0].y;
+        const xDistance = Math.abs(points[0].x - points[points.length - 1].x);
+        const yDistance = Math.abs(points[0].y - points[points.length - 1].y);
         // side length as average of x and y distance
-        const side = (Math.abs(points[0].x - points[points.length - 1].x) + Math.abs(points[0].y - points[points.length - 1].y)) / 2;
+        const side = (xDistance + yDistance) / 2;
         const width = points[0].x < points[points.length - 1].x ? side : -side;
         const height = points[0].y < points[points.length - 1].y ? side : -side;
 
@@ -483,7 +501,10 @@
         const x = points[0].x;
         const y = points[0].y;
         const radius =
-            Math.min(Math.abs(points[0].x - points[points.length - 1].x), Math.abs(points[0].y - points[points.length - 1].y)) / 2;
+            Math.min(
+                Math.abs(points[0].x - points[points.length - 1].x),
+                Math.abs(points[0].y - points[points.length - 1].y),
+            ) / 2;
         const width = points[0].x < points[points.length - 1].x ? radius : -radius;
         const height = points[0].y < points[points.length - 1].y ? radius : -radius;
 
@@ -516,6 +537,13 @@
         e.preventDefault();
     }
 
+    const isMac = navigator.platform.toLowerCase().includes("mac");
+    function isModifierKeyPressed(e) {
+        // ctrl or cmd, based on operating system
+        if (isMac) return e.metaKey;
+        return e.ctrlKey;
+    }
+
     function keyDown(e) {
         let popup;
         let captured = true;
@@ -527,14 +555,24 @@
 
         // ignore key presses in text inputs
         // except ctrl shortcuts
-        if (document.activeElement.classList.contains("sdmcd-text-input") && !e.ctrlKey) {
+        if (
+            document.activeElement.classList.contains("sdmcd-text-input") &&
+            !isModifierKeyPressed(e)
+        ) {
             e.stopPropagation();
             return;
         }
 
         // ignore key presses when unfocused/hidden
         // except F1 while unfocused/hidden and F while unfocused
-        if (!(!(unfocused || hidden) || (e.key == "F1" && (unfocused || hidden)) || (e.key == "f" && unfocused))) return;
+        if (
+            !(
+                !(unfocused || hidden) ||
+                (e.key == "F1" && (unfocused || hidden)) ||
+                (e.key == "f" && unfocused)
+            )
+        )
+            return;
 
         // keep track of if any key has been pressed while shift is held because a clean
         // shift keypress is used to switch to pen
@@ -574,7 +612,7 @@
                 break;
             case "s":
                 // save image
-                if (e.ctrlKey) {
+                if (isModifierKeyPressed(e)) {
                     const dataURL = canvas.toDataURL("image/png");
                     const a = document.createElement("a");
                     a.href = dataURL;
@@ -650,7 +688,7 @@
                 applyHide();
                 break;
             case "z":
-                if (e.ctrlKey) {
+                if (isModifierKeyPressed(e)) {
                     const current = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     const previous = history.pop();
                     if (!previous) break;
@@ -667,13 +705,21 @@
                             const input = document.getElementById(inputId);
                             input.classList.remove("removed");
                         }
-                        redoHistory.push({ data: current, activeTextInputs: previous.activeTextInputs, switch: previous.switch });
+                        redoHistory.push({
+                            data: current,
+                            activeTextInputs: previous.activeTextInputs,
+                            switch: previous.switch,
+                        });
                     } else if (previous.textId) {
                         document.activeElement.blur();
                         const input = document.getElementById(previous.textId);
                         if (previous.text) {
                             // previous action was a text edit
-                            redoHistory.push({ data: current, textId: previous.textId, text: input.textContent });
+                            redoHistory.push({
+                                data: current,
+                                textId: previous.textId,
+                                text: input.textContent,
+                            });
                             input.textContent = previous.text;
                         } else {
                             // previous action was a text input (init)
@@ -687,7 +733,7 @@
                 }
                 break;
             case "y":
-                if (e.ctrlKey) {
+                if (isModifierKeyPressed(e)) {
                     const current = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     const next = redoHistory.pop();
                     if (!next) break;
@@ -703,13 +749,21 @@
                             const input = document.getElementById(inputId);
                             input.classList.add("removed");
                         }
-                        history.push({ data: current, activeTextInputs: next.activeTextInputs, switch: next.switch });
+                        history.push({
+                            data: current,
+                            activeTextInputs: next.activeTextInputs,
+                            switch: next.switch,
+                        });
                     } else if (next.textId) {
                         document.activeElement.blur();
                         const input = document.getElementById(next.textId);
                         if (next.text) {
                             // previous action was a text edit
-                            history.push({ data: current, textId: next.textId, text: input.textContent });
+                            history.push({
+                                data: current,
+                                textId: next.textId,
+                                text: input.textContent,
+                            });
                             input.textContent = next.text;
                         } else {
                             // previous action was a text input (init)
@@ -805,7 +859,11 @@
         if (whiteboard) {
             // save snapshot of current canvas to history (with mode switch)
             if (saveSnapshot) {
-                history.push({ switch: true, activeTextInputs: texts, data: ctx.getImageData(0, 0, canvas.width, canvas.height) });
+                history.push({
+                    switch: true,
+                    activeTextInputs: texts,
+                    data: ctx.getImageData(0, 0, canvas.width, canvas.height),
+                });
             }
             ctx.fillStyle = "#FFFFFF";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -813,7 +871,11 @@
             applyColor();
         } else {
             if (saveSnapshot) {
-                history.push({ switch: true, activeTextInputs: texts, data: ctx.getImageData(0, 0, canvas.width, canvas.height) });
+                history.push({
+                    switch: true,
+                    activeTextInputs: texts,
+                    data: ctx.getImageData(0, 0, canvas.width, canvas.height),
+                });
             }
             color = "#FF0000";
             applyColor();
@@ -826,12 +888,25 @@
         // save listener aborter to document to persist across bookmarklet calls
         document.sdmcdMouseAborter = new AbortController();
 
-        window.addEventListener("contextmenu", contextMenu, { signal: document.sdmcdMouseAborter.signal });
-        window.addEventListener("pointerdown", pointerDown, { signal: document.sdmcdMouseAborter.signal });
-        window.addEventListener("pointerup", pointerUp, { signal: document.sdmcdMouseAborter.signal });
-        window.addEventListener("pointermove", pointerMove, { signal: document.sdmcdMouseAborter.signal });
-        window.addEventListener("dragstart", dragStart, { signal: document.sdmcdMouseAborter.signal });
-        window.addEventListener("wheel", scroll, { passive: false, signal: document.sdmcdMouseAborter.signal });
+        window.addEventListener("contextmenu", contextMenu, {
+            signal: document.sdmcdMouseAborter.signal,
+        });
+        window.addEventListener("pointerdown", pointerDown, {
+            signal: document.sdmcdMouseAborter.signal,
+        });
+        window.addEventListener("pointerup", pointerUp, {
+            signal: document.sdmcdMouseAborter.signal,
+        });
+        window.addEventListener("pointermove", pointerMove, {
+            signal: document.sdmcdMouseAborter.signal,
+        });
+        window.addEventListener("dragstart", dragStart, {
+            signal: document.sdmcdMouseAborter.signal,
+        });
+        window.addEventListener("wheel", scroll, {
+            passive: false,
+            signal: document.sdmcdMouseAborter.signal,
+        });
         document.body.style.touchAction = "none";
     }
 
@@ -898,6 +973,10 @@
         colorContent.appendChild(colorPicker);
     }
 
+    function getModifierKey() {
+        return isMac ? "⌘" : "Ctrl + ";
+    }
+
     function showHelpPopup() {
         const popupContent = createPopup();
 
@@ -932,9 +1011,9 @@
             [1, "F", "Focus page content"],
             [1, "F1", "Hide drawing"],
             [1],
-            [1, "Ctrl + Z", "Undo"],
-            [1, "Ctrl + Y", "Redo"],
-            [1, "Ctrl + S", "Save as image"],
+            [1, `${getModifierKey()}Z`, "Undo"],
+            [1, `${getModifierKey()}Y`, "Redo"],
+            [1, `${getModifierKey()}S`, "Save as image"],
             [1],
             [1, "H", "Show keybinds"],
             [1, "Esc", "Close modal / Exit drawing"],
